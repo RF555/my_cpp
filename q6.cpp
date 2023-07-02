@@ -1,34 +1,61 @@
 #include <iostream>
 #include <map>
+#include <string>
 using namespace std;
-// using namespace ariel;
+
 namespace ariel {
 
 class Money {
 public:
-  static map<string, double> rate_map;
+  static std::map<std::string, double> rate_map;
 
 private:
   double _amount;
   string _currency;
 
 public:
-  Money(double amount, string currency);
-  static void set_rate(string currency, double rate);
+  Money(double amount, const string &currency);
+  static void set_rate(const string &currency, double rate);
   friend Money operator+(const Money &m1, const Money &m2);
   friend ostream &operator<<(ostream &output, const Money &m);
-  Money &operator+=(const Money _other);
+  Money &operator+=(const Money &_other);
+  double getAmount() const;
+  string getCurrency();
 };
 
-Money::Money(double amount, string currency) {}
+Money::Money(double amount, const string &currency) {
+  if (ariel::Money::rate_map.count(currency) == 0) {
+    throw std::runtime_error("RUNTIME ERROR: Currency \"" + currency +
+                             "\" is not set!\n");
+  }
+  this->_amount = amount;
+  this->_currency = currency;
+}
 
-void Money::set_rate(string currency, double rate) {}
+void Money::set_rate(const string &currency, double rate) {
+  rate_map[currency] = rate;
+}
 
-Money operator+(const Money &m1, const Money &m2) {}
+Money operator+(const Money &m1, const Money &m2) {
+  return {(m1._amount + (m2._amount * Money::rate_map[m2._currency]) /
+                            Money::rate_map[m1._currency]),
+          m1._currency};
+}
 
-Money &Money::operator+=(const Money _other) {}
+ostream &operator<<(ostream &output, const Money &m) {
+  return output << m._amount << " " << m._currency << endl;
+}
 
-ostream &operator<<(ostream &output, const Money &m) {}
+Money &Money::operator+=(const Money &_other) {
+  this->_amount = (*this + _other).getAmount();
+  return *this;
+}
+
+map<string, double> Money::rate_map{};
+
+double Money::getAmount() const { return this->_amount; }
+
+string Money::getCurrency() { return this->_currency; }
 
 } // namespace ariel
 using ariel::Money;
